@@ -79,7 +79,7 @@ localsync = (method, model, options, error) ->
 
   store = model.localStorage or model.collection.localStorage
 
-  resp = switch method
+  response = switch method
     when 'read'
       if model.id then store.find(model) else store.findAll()
     when 'create'
@@ -89,8 +89,8 @@ localsync = (method, model, options, error) ->
     when 'delete'
       store.destroy(model)
 
-  if resp
-    options.success resp
+  if response
+    options.success response
   else
     options.error 'Record not found'
 
@@ -100,6 +100,12 @@ localsync = (method, model, options, error) ->
 getUrl = (object) ->
   if not (object and object.url) then return null
   if _.isFunction(object.url) then object.url() else object.url
+
+# Helper function to run parseBeforeLocalSave() in order to
+# parse a remote JSON response before caching locally
+parseRemoteResponse = (object, response) ->
+  if not (object and object.parseBeforeLocalSave) then return null
+  if _.isFunction(object.parseBeforeLocalSave) then object.parseBeforeLocalSave(response)
 
 # Throw an error when a URL is needed, and none is supplied.
 urlError = ->
@@ -129,16 +135,17 @@ dualsync = (method, model, options) ->
           return
 
         success = options.success
-        options.success = (resp, status, xhr) ->
-          console.log 'got remote', resp, 'putting into', store
-          if _.isArray resp
-            for i in resp
+        options.success = (response, status, xhr) ->
+          console.log 'got remote', response, 'putting into', store
+          response = parseRemoteResponse(model, response)
+          if _.isArray response
+            for i in response
               console.log 'trying to store', i
               store.create i
           else
-            store.create resp
+            store.create response
 
-          success resp
+          success response
 
       if not model.local
         onlineSync(method, model, options)

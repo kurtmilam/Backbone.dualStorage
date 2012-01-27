@@ -1,6 +1,6 @@
 (function() {
   'use strict';
-  var S4, dualsync, getUrl, guid, localsync, methodMap, onlineSync, urlError;
+  var S4, dualsync, getUrl, guid, localsync, methodMap, onlineSync, parseRemoteResponse, urlError;
 
   S4 = function() {
     return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
@@ -78,7 +78,7 @@
   })();
 
   localsync = function(method, model, options, error) {
-    var resp, store;
+    var response, store;
     if (typeof options === 'function') {
       options = {
         success: options,
@@ -86,7 +86,7 @@
       };
     }
     store = model.localStorage || model.collection.localStorage;
-    resp = (function() {
+    response = (function() {
       switch (method) {
         case 'read':
           if (model.id) {
@@ -103,8 +103,8 @@
           return store.destroy(model);
       }
     })();
-    if (resp) {
-      return options.success(resp);
+    if (response) {
+      return options.success(response);
     } else {
       return options.error('Record not found');
     }
@@ -116,6 +116,13 @@
       return object.url();
     } else {
       return object.url;
+    }
+  };
+
+  parseRemoteResponse = function(object, response) {
+    if (!(object && object.parseBeforeLocalSave)) return null;
+    if (_.isFunction(object.parseBeforeLocalSave)) {
+      return object.parseBeforeLocalSave(response);
     }
   };
 
@@ -146,19 +153,20 @@
             return;
           }
           success = options.success;
-          options.success = function(resp, status, xhr) {
+          options.success = function(response, status, xhr) {
             var i, _i, _len;
-            console.log('got remote', resp, 'putting into', store);
-            if (_.isArray(resp)) {
-              for (_i = 0, _len = resp.length; _i < _len; _i++) {
-                i = resp[_i];
+            console.log('got remote', response, 'putting into', store);
+            response = parseRemoteResponse(model, response);
+            if (_.isArray(response)) {
+              for (_i = 0, _len = response.length; _i < _len; _i++) {
+                i = response[_i];
                 console.log('trying to store', i);
                 store.create(i);
               }
             } else {
-              store.create(resp);
+              store.create(response);
             }
-            return success(resp);
+            return success(response);
           };
         }
         if (!model.local) return onlineSync(method, model, options);
