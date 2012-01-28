@@ -30,9 +30,9 @@
       if (!_.isObject(model)) return model;
       if (model.attributes != null) model = model.attributes;
       if (!model.id) model.id = guid();
-      var date = Date.now();
-      // FORMAT IS: [model, lastLocalSaveDate, lastRemoteSyncDate, isDirty]
-      localStorage.setItem(this.name + this.sep + model.id, JSON.stringify([model,date,date,0]));
+      var date = Math.round(Date.now()/1000);
+      // FORMAT IS: [model, lastLocalSaveDate, lastRemoteSyncDateOffset, isDirty]
+      localStorage.setItem(this.name + this.sep + model.id, JSON.stringify([model,date,0,0]));
       this.records.push(model.id.toString());
       this.save();
       return model;
@@ -40,8 +40,8 @@
 
     Store.prototype.update = function(model) {
       console.log('updating', model, 'in', this.name);
-      var date = Date.now();
-      localStorage.setItem(this.name + this.sep + model.id, JSON.stringify([model,date,date,0]));
+      console.log(Date.now());
+      localStorage.setItem(this.name + this.sep + model.id, JSON.stringify([model,date,0,0]));
       if (!_.include(this.records, model.id.toString())) {
         this.records.push(model.id.toString());
       }
