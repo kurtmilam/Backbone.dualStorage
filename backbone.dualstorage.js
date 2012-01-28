@@ -30,7 +30,8 @@
       if (!_.isObject(model)) return model;
       if (model.attributes != null) model = model.attributes;
       if (!model.id) model.id = guid();
-      localStorage.setItem(this.name + this.sep + model.id, JSON.stringify(model));
+      var date = Date.now();
+      localStorage.setItem(this.name + this.sep + model.id, JSON.stringify({d:0,l:date,r:date,m:model}));
       this.records.push(model.id.toString());
       this.save();
       return model;
@@ -38,7 +39,8 @@
 
     Store.prototype.update = function(model) {
       console.log('updating', model, 'in', this.name);
-      localStorage.setItem(this.name + this.sep + model.id, JSON.stringify(model));
+      var date = Date.now();
+      localStorage.setItem(this.name + this.sep + model.id, JSON.stringify({d:0,l:date,r:date,m:model}));
       if (!_.include(this.records, model.id.toString())) {
         this.records.push(model.id.toString());
       }
@@ -48,7 +50,7 @@
 
     Store.prototype.find = function(model) {
       console.log('finding', model, 'in', this.name);
-      return JSON.parse(localStorage.getItem(this.name + this.sep + model.id));
+      return JSON.parse(localStorage.getItem(this.name + this.sep + model.id)).m;
     };
 
     Store.prototype.findAll = function() {
@@ -58,7 +60,7 @@
       _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         id = _ref[_i];
-        _results.push(JSON.parse(localStorage.getItem(this.name + this.sep + id)));
+        _results.push(JSON.parse(localStorage.getItem(this.name + this.sep + id)).m);
       }
       return _results;
     };
@@ -148,7 +150,7 @@
         if (store) {
           response = model.id ? store.find(model) : store.findAll();
           if (!_.isEmpty(response)) {
-            console.log('getting local', response, 'from', store);
+            console.log('getting local', response.m, 'from', store);
             options.success(response);
             return;
           }
