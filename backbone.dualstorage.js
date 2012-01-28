@@ -30,18 +30,17 @@
       if (!_.isObject(model)) return model;
       if (model.attributes != null) model = model.attributes;
       if (!model.id) model.id = guid();
-      var date = Math.round(Date.now()/1000);
-      // FORMAT IS: [model, lastLocalSaveDate, lastRemoteSyncDateOffset, isDirty]
-      localStorage.setItem(this.name + this.sep + model.id, JSON.stringify([model,date,0,0]));
+      var lastLocalSaveDate = Math.round(Date.now()/1000);
+      // FORMAT IS: [model, lastLocalSaveDate, lastRemoteSyncDateOffset]
+      localStorage.setItem(this.name + this.sep + model.id, JSON.stringify([model,lastLocalSaveDate,0]));
       this.records.push(model.id.toString());
       this.save();
       return model;
     };
 
     Store.prototype.update = function(model) {
-      console.log('updating', model, 'in', this.name);
-      console.log(Date.now());
-      localStorage.setItem(this.name + this.sep + model.id, JSON.stringify([model,date,0,0]));
+      var lastLocalSaveDate = Math.round(Date.now()/1000);
+      localStorage.setItem(this.name + this.sep + model.id, JSON.stringify([model,lastLocalSaveDate,0]));
       if (!_.include(this.records, model.id.toString())) {
         this.records.push(model.id.toString());
       }
@@ -151,7 +150,7 @@
         if (store) {
           response = model.id ? store.find(model) : store.findAll();
           if (!_.isEmpty(response)) {
-            console.log('getting local', response[0], 'from', store);
+            console.log('getting local', response, 'from', store);
             options.success(response);
             return;
           }
